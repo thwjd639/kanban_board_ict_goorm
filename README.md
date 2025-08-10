@@ -60,10 +60,11 @@ src/
 ├── index.css
 ├── main.tsx                  # 앱 진입점
 └── vite-env.d.ts
-
-## 💻 설치 및 실행 방법
 ```
 
+## 💻 설치 및 실행 방법
+
+```
 # 1. 저장소 클론
 
 git clone https://github.com/username/my-kanban-board.git
@@ -83,17 +84,16 @@ npm run build
 ```
 
 ## 🖼 실행 화면
+
 📌 칸반 보드
 ![alt text](image-1.png)
 📊 대시보드
 ![alt text](image.png)
 
 📅 향후 계획
- [] 카드 검색 기능 추가
- [] 칼럼 순서 변경 기능
- [] 백엔드 연동 및 로그인 기능
+[] 카드 검색 기능 추가
+[] 칼럼 순서 변경 기능
+[] 백엔드 연동 및 로그인 기능
 
 📜 라이선스
 이 프로젝트는 MIT 라이선스를 따릅니다.
-
-```
