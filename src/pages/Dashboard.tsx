@@ -3,6 +3,7 @@ import { useLocalStorage } from '../hooks/useLocalStorage';
 import { generateDashboardStats, getRecentTasks } from '../utils/taskUtils';
 import type { Column, Task } from '../types/types';
 import { Briefcase, User, Clock, TrendingUp, AlertCircle, Edit } from 'lucide-react';
+import TaskCard from '../components/TaskCard';
 
 const Dashboard: React.FC = () => {
   // 기본 컬럼 설정 (칸반보드와 동일)
@@ -246,25 +247,20 @@ const Dashboard: React.FC = () => {
             {recentTasks.length > 0 ? (
               // 이 부분이 수정되었습니다.
               <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3 sm:gap-4 lg:gap-6">
-                {recentTasks.map((task, index) => (
-                  <div
-                    key={index}
-                    className="bg-gray-50 dark:bg-gray-700 p-3 rounded-lg shadow-sm border border-gray-200 dark:border-gray-600 transition-colors"
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={`text-xs font-semibold px-2 py-1 rounded-full ${getStatusBadge(task.status)}`}>
-                        {task.status === 'done' ? '완료' : task.status === 'in-progress' ? '진행 중' : task.status === 'stop' ? '보류' : '할 일'}
-                      </span>
-                      <span className={`text-xs font-medium ${task.priority === 'high' ? 'text-red-500' : task.priority === 'medium' ? 'text-orange-500' : 'text-blue-500'}`}>
-                        {task.priority === 'high' ? '높음' : task.priority === 'medium' ? '보통' : '낮음'}
-                      </span>
-                    </div>
-                    <h3 className="text-base font-medium text-gray-800 dark:text-gray-200 truncate">{task.title}</h3>
-                    <p className="text-xs text-gray-600 dark:text-gray-400 mt-1 truncate">
-                      {task.assignee || '담당자 미지정'}
-                    </p>
-                  </div>
-                ))}
+                {recentTasks.map((task) => {
+                  const columnId = columns.find(col => col.tasks.some(t => t.id === task.id))?.id || '';
+                  return (
+                    <TaskCard
+                      key={task.id}
+                      task={task}
+                      columnId={columnId}
+                      columns={columns}
+                      onEdit={() => {}} // 대시보드에서는 편집 비활성
+                      onDelete={() => {}} // 대시보드에서는 삭제 비활성
+                      compact
+                    />
+                  );
+                })}
               </div>
             ) : (
               <div className="text-center py-8 text-gray-500 dark:text-gray-400 transition-colors">
