@@ -29,6 +29,9 @@ const TaskForm: React.FC<TaskFormProps> = ({ formData, workMode, onSubmit, onCan
     onSubmit();
   };
 
+  // 오늘 날짜를 최소값으로 설정
+  const today = new Date().toISOString().split('T')[0];
+
   return (
     <form
       onSubmit={handleFormSubmit}
@@ -59,6 +62,23 @@ const TaskForm: React.FC<TaskFormProps> = ({ formData, workMode, onSubmit, onCan
           rows={2}
         />
       </div>
+      
+      {/* 마감일 입력 필드 추가 */}
+      <div>
+        <label htmlFor="taskDueDate" className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+          마감일 (선택사항)
+        </label>
+        <input
+          id="taskDueDate"
+          type="date"
+          name="dueDate"
+          value={formData.dueDate}
+          onChange={handleInputChange}
+          min={today}
+          className="w-full px-3 py-2 text-sm rounded-md bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-2 focus:ring-blue-400 dark:text-gray-200"
+        />
+      </div>
+      
       <div className="flex flex-col sm:flex-row gap-3">
         {workMode === 'business' && (
           <div className="flex-1">

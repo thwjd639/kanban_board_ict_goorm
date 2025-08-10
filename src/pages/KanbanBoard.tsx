@@ -116,7 +116,7 @@ const KanbanBoard: React.FC = () => {
       assignee: workMode === 'personal' ? '나' : (newTask.assignee || undefined),
       priority: newTask.priority,
       createdAt: new Date(),
-      dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined,
+      dueDate: newTask.dueDate ? new Date(newTask.dueDate) : undefined, // 이미 있음
       timeline: {
         [`created-${Date.now()}`]: {
           timestamp: new Date().toISOString(),
@@ -165,6 +165,11 @@ const KanbanBoard: React.FC = () => {
     if (editingTask.description !== editTask.description) changes.push('설명');
     if (editingTask.assignee !== editTask.assignee) changes.push('담당자');
     if (editingTask.priority !== editTask.priority) changes.push('우선순위');
+
+    // 마감일 변경 감지 추가
+    const oldDueDate = editingTask.dueDate?.toISOString().split('T')[0] || '';
+    const newDueDate = editTask.dueDate || '';
+    if (oldDueDate !== newDueDate) changes.push('마감일');
 
     setColumns(prev => prev.map(column => {
       if (column.id === columnId) {
