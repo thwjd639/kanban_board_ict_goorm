@@ -6,6 +6,7 @@ import { useDragAndDrop } from '../hooks/useDragAndDrop';
 import { updateTaskTimeline } from '../utils/taskUtils';
 import KanbanColumn from '../components/KanbanColumn';
 import TaskDetailModal from '../components/TaskDetailModal';
+import CelebrationAnimation from '../components/CelebrationAnimation';
 import type { Task, Column } from '../types/types';
 
 // 우선순위와 최근 생성일 기준으로 정렬하는 함수를 수정합니다.
@@ -52,6 +53,10 @@ const KanbanBoard: React.FC = () => {
   const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
   const [selectedTask, setSelectedTask] = useState<Task | null>(null);
 
+  // 축하 애니메이션 상태 추가
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [celebrationTaskTitle, setCelebrationTaskTitle] = useState('');
+
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape' && editingTask) {
@@ -76,6 +81,13 @@ const KanbanBoard: React.FC = () => {
     if (!fromColumn || !toColumn) {
       resetDrag();
       return;
+    }
+
+    // 완료 상태로 이동하는 경우 축하 애니메이션 트리거
+    const isMovingToDone = toColumn.status === 'done' && fromColumn.status !== 'done';
+    if (isMovingToDone) {
+      setCelebrationTaskTitle(draggedTask.title);
+      setShowCelebration(true);
     }
 
     const updatedTask = updateTaskTimeline(draggedTask, fromColumn.status, toColumn.status);
@@ -114,6 +126,13 @@ const KanbanBoard: React.FC = () => {
       },
       workMode: workMode
     };
+
+    // 완료 컬럼에 직접 추가하는 경우 축하 애니메이션 트리거
+    const targetColumn = columns.find(col => col.id === columnId);
+    if (targetColumn?.status === 'done') {
+      setCelebrationTaskTitle(task.title);
+      setShowCelebration(true);
+    }
 
     setColumns(prev => prev.map(column => {
       if (column.id === columnId) {
@@ -213,6 +232,15 @@ const KanbanBoard: React.FC = () => {
   };
 
   const handleTaskUpdate = (updatedTask: Task, oldColumnId: string, newColumnId: string) => {
+    // 완료 상태로 업데이트되는 경우 축하 애니메이션 트리거
+    const oldColumn = columns.find(col => col.id === oldColumnId);
+    const newColumn = columns.find(col => col.id === newColumnId);
+    
+    if (oldColumn && newColumn && newColumn.status === 'done' && oldColumn.status !== 'done') {
+      setCelebrationTaskTitle(updatedTask.title);
+      setShowCelebration(true);
+    }
+
     setColumns(prev => prev.map(column => {
       if (column.id === oldColumnId) {
         return {
@@ -232,6 +260,11 @@ const KanbanBoard: React.FC = () => {
     setShowAddForm(null);
     setNewTask({ title: '', description: '', assignee: '', priority: 'medium' as const, dueDate: '' });
   }, []);
+
+  const handleCelebrationComplete = () => {
+    setShowCelebration(false);
+    setCelebrationTaskTitle('');
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 to-slate-200 dark:from-slate-800 dark:to-slate-900 transition-colors">
@@ -338,6 +371,13 @@ const KanbanBoard: React.FC = () => {
           onUpdate={handleTaskUpdate}
         />
       )}
+
+      {/* 축하 애니메이션 */}
+      <CelebrationAnimation
+        isVisible={showCelebration}
+        taskTitle={celebrationTaskTitle}
+        onAnimationComplete={handleCelebrationComplete}
+      />
     </div>
   );
 };

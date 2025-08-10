@@ -1,9 +1,6 @@
-# kanban_board_ict_goorm
-
-ict_goorm 풀스택 교육 과정 중 개인 프로젝트 입니다.
-
 # 📋 My Kanban Board
 
+ict_goorm 풀스택 교육 과정 중 개인 프로젝트 입니다.
 React + TypeScript + TailwindCSS로 제작한 개인용 **칸반 보드(Kanban Board)** 웹 애플리케이션입니다.  
 할 일을 시각적으로 관리하고, 드래그 앤 드롭으로 상태를 쉽게 변경할 수 있습니다.
 
