@@ -1,4 +1,3 @@
-// TaskCard.tsx
 import React from 'react';
 import { Calendar, User, Briefcase, AlertTriangle, Clock } from 'lucide-react';
 import { formatDate, getDueDateStatus, getDueDateColor, getDueDateText } from '../utils/dateUtils';
@@ -15,7 +14,9 @@ interface TaskCardProps {
   compact?: boolean;
 }
 
-const DueDateBadge: React.FC<{ dueDate: Date }> = ({ dueDate }) => {
+const DueDateBadge: React.FC<{ dueDate: any }> = ({ dueDate }) => {
+  if (!dueDate) return null;
+  
   const status = getDueDateStatus(dueDate);
   const colorClass = getDueDateColor(status);
   const statusText = getDueDateText(status);
@@ -39,6 +40,10 @@ const TaskCard: React.FC<TaskCardProps> = ({
   onViewDetail,
   compact = false 
 }) => {
+  // 디버깅용 로그
+  // console.log('TaskCard - task.dueDate:', task.dueDate, 'type:', typeof task.dueDate);
+  // console.log('TaskCard - full task:', task);
+
   const getPriorityColor = (priority: string) => {
     switch (priority) {
       case 'high': return 'border-red-400 bg-red-50 dark:bg-red-900/20';
@@ -57,10 +62,21 @@ const TaskCard: React.FC<TaskCardProps> = ({
     }
   };
 
-  // 마감일 상태 확인
-  const dueDateStatus = task.dueDate ? getDueDateStatus(task.dueDate) : null;
-  const dueDateColor = dueDateStatus ? getDueDateColor(dueDateStatus) : '';
-  const dueDateText = dueDateStatus ? getDueDateText(dueDateStatus) : '';
+  // 마감일 상태 확인 - 안전하게 처리
+  let dueDateStatus = null;
+  let dueDateColor = '';
+  let dueDateText = '';
+  
+  try {
+    if (task.dueDate) {
+      dueDateStatus = getDueDateStatus(task.dueDate);
+      dueDateColor = getDueDateColor(dueDateStatus);
+      dueDateText = getDueDateText(dueDateStatus);
+    }
+  } catch (error) {
+    console.error('Error processing due date:', error, 'dueDate:', task.dueDate);
+    dueDateStatus = null;
+  }
 
   return (
     <div

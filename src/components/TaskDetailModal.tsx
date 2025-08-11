@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { X, Edit, Trash2, Save, Clock, User, Briefcase, ChevronRight, AlertTriangle } from 'lucide-react';
+import { X, Edit, Trash2, Save, Clock, User, Briefcase, ChevronRight, AlertTriangle, Calendar } from 'lucide-react';
 import type { Task, Column, TaskStatus } from '../types/types';
 import ActivityLog from './ActivityLog';
 import { updateTaskTimeline, getPriorityColor, getPriorityText } from '../utils/taskUtils';
+import { formatDate, getDueDateStatus, getDueDateColor, getDueDateText } from '../utils/dateUtils';
 
 interface TaskDetailModalProps {
   task: Task;
@@ -14,10 +15,17 @@ interface TaskDetailModalProps {
 
 const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClose, onDelete, onUpdate }) => {
   const [isEditing, setIsEditing] = useState(false);
-  const [editedTask, setEditedTask] = useState(task);
+  const [editedTask, setEditedTask] = useState({
+    ...task,
+    // dueDate를 문자열로 변환 (날짜 입력 필드용)
+    dueDateString: task.dueDate ? task.dueDate.toISOString().split('T')[0] : ''
+  });
   
   const currentColumn = columns.find(col => col.tasks.some(t => t.id === task.id));
   if (!currentColumn) return null;
+
+  // 오늘 날짜
+  const today = new Date().toISOString().split('T')[0];
 
   const handleSave = () => {
     const changes = [];
@@ -26,9 +34,16 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClos
     if (task.assignee !== editedTask.assignee) changes.push('담당자');
     if (task.priority !== editedTask.priority) changes.push('우선순위');
     
+    // 마감일 변경 감지
+    const oldDueDate = task.dueDate?.toISOString().split('T')[0] || '';
+    const newDueDate = editedTask.dueDateString || '';
+    if (oldDueDate !== newDueDate) changes.push('마감일');
+    
     // 타임라인에 수정 기록 추가
     const updatedTaskWithTimeline = {
       ...editedTask,
+      // dueDateString을 실제 Date 객체로 변환
+      dueDate: editedTask.dueDateString ? new Date(editedTask.dueDateString) : undefined,
       timeline: changes.length > 0
         ? {
             ...editedTask.timeline,
@@ -41,7 +56,10 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClos
         : editedTask.timeline
     };
 
-    onUpdate(updatedTaskWithTimeline, currentColumn.id, currentColumn.id);
+    // dueDateString 속성 제거 (Task 타입에 없으므로)
+    const { dueDateString, ...finalTask } = updatedTaskWithTimeline;
+
+    onUpdate(finalTask as Task, currentColumn.id, currentColumn.id);
     setIsEditing(false);
   };
 
@@ -53,6 +71,11 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClos
     onUpdate(updatedTask, currentColumn.id, newColumn.id);
     onClose();
   };
+
+  // 마감일 상태 확인
+  const dueDateStatus = task.dueDate ? getDueDateStatus(task.dueDate) : null;
+  const dueDateColor = dueDateStatus ? getDueDateColor(dueDateStatus) : '';
+  const dueDateText = dueDateStatus ? getDueDateText(dueDateStatus) : '';
   
   return (
     <div 
@@ -109,6 +132,14 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClos
               </button>
             </div>
           </div>
+
+          {/* 마감일 알림 배지 (상단에 눈에 띄게 표시) */}
+          {task.dueDate && dueDateStatus && dueDateStatus !== 'normal' && (
+            <div className={`mb-4 px-3 py-2 rounded-lg border ${dueDateColor} font-medium text-sm flex items-center gap-2`}>
+              <AlertTriangle size={16} />
+              <span>{dueDateText} - {formatDate(task.dueDate)}</span>
+            </div>
+          )}
           
           {/* 작업 정보 섹션 */}
           <div className="space-y-4 mb-6">
@@ -116,7 +147,7 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClos
               <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">설명</p>
               {isEditing ? (
                 <textarea
-                  value={editedTask.description}
+                  value={editedTask.description || ''}
                   onChange={(e) => setEditedTask({ ...editedTask, description: e.target.value })}
                   className="w-full h-24 p-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-200"
                   placeholder="작업에 대한 상세 설명을 작성하세요."
@@ -126,13 +157,13 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClos
               )}
             </div>
             
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               <div>
                 <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">담당자</p>
                 {isEditing ? (
                   <input
                     type="text"
-                    value={editedTask.assignee}
+                    value={editedTask.assignee || ''}
                     onChange={(e) => setEditedTask({ ...editedTask, assignee: e.target.value })}
                     className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-200"
                     placeholder="담당자를 지정하세요."
@@ -163,6 +194,25 @@ const TaskDetailModal: React.FC<TaskDetailModalProps> = ({ task, columns, onClos
                     <span className="text-sm font-medium text-gray-700 dark:text-gray-300">
                       {getPriorityText(task.priority)}
                     </span>
+                  </div>
+                )}
+              </div>
+
+              {/* 마감일 섹션 추가 */}
+              <div>
+                <p className="text-xs font-semibold text-gray-500 dark:text-gray-400 mb-1">마감일</p>
+                {isEditing ? (
+                  <input
+                    type="date"
+                    value={editedTask.dueDateString}
+                    onChange={(e) => setEditedTask({ ...editedTask, dueDateString: e.target.value })}
+                    min={today}
+                    className="w-full p-2 text-sm border border-gray-300 dark:border-gray-600 rounded focus:outline-none focus:ring-2 focus:ring-blue-400 dark:bg-gray-700 dark:text-gray-200"
+                  />
+                ) : (
+                  <div className="flex items-center text-sm font-medium text-gray-700 dark:text-gray-300 gap-2">
+                    <Calendar size={16} />
+                    {task.dueDate ? formatDate(task.dueDate) : '미설정'}
                   </div>
                 )}
               </div>

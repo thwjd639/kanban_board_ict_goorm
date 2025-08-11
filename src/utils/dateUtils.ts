@@ -1,12 +1,84 @@
-export const formatDate = (date: Date): string => {
-  return date.toLocaleDateString('ko-KR', {
+export const formatDate = (date: any): string => {
+  // Date 객체로 변환
+  let dateObj: Date;
+  
+  if (typeof date === 'string') {
+    dateObj = new Date(date);
+  } else if (date instanceof Date) {
+    dateObj = date;
+  } else if (typeof date === 'object' && date) {
+    // 객체인 경우 여러 가지 시도
+    if (date.toISOString) {
+      dateObj = new Date(date);
+    } else if (date.seconds || date._seconds) {
+      const seconds = date.seconds || date._seconds;
+      const nanoseconds = date.nanoseconds || date._nanoseconds || 0;
+      dateObj = new Date(seconds * 1000 + nanoseconds / 1000000);
+    } else if (date.$date) {
+      dateObj = new Date(date.$date);
+    } else if (typeof date.toString === 'function') {
+      dateObj = new Date(date.toString());
+    } else {
+      return '유효하지 않은 날짜';
+    }
+  } else {
+    return '유효하지 않은 날짜';
+  }
+  
+  // 유효한 날짜인지 확인
+  if (isNaN(dateObj.getTime())) {
+    return '유효하지 않은 날짜';
+  }
+  
+  return dateObj.toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'short',
     day: 'numeric'
   });
 };
 
-export const getDueDateStatus = (dueDate: Date): 'overdue' | 'today' | 'tomorrow' | 'upcoming' | 'normal' => {
+export const getDueDateStatus = (dueDate: any): 'overdue' | 'today' | 'tomorrow' | 'upcoming' | 'normal' => {
+  // null, undefined 체크
+  if (!dueDate) {
+    return 'normal';
+  }
+  
+  // Date 객체로 변환
+  let dateObj: Date;
+  if (typeof dueDate === 'string') {
+    dateObj = new Date(dueDate);
+  } else if (dueDate instanceof Date) {
+    dateObj = dueDate;
+  } else if (typeof dueDate === 'object') {
+    // 객체인 경우 여러 가지 시도
+    if (dueDate.toISOString) {
+      // Date처럼 보이는 객체
+      dateObj = new Date(dueDate);
+    } else if (dueDate.seconds || dueDate._seconds) {
+      // Firestore Timestamp 형태
+      const seconds = dueDate.seconds || dueDate._seconds;
+      const nanoseconds = dueDate.nanoseconds || dueDate._nanoseconds || 0;
+      dateObj = new Date(seconds * 1000 + nanoseconds / 1000000);
+    } else if (dueDate.$date) {
+      // MongoDB 날짜 형태
+      dateObj = new Date(dueDate.$date);
+    } else if (typeof dueDate.toString === 'function') {
+      // toString 메서드가 있는 객체
+      dateObj = new Date(dueDate.toString());
+    } else {
+      console.log('Unknown object format for date:', dueDate);
+      return 'normal';
+    }
+  } else {
+    return 'normal';
+  }
+  
+  // 유효한 날짜인지 확인
+  if (isNaN(dateObj.getTime())) {
+    console.log('Invalid date object');
+    return 'normal';
+  }
+  
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(today.getDate() + 1);
@@ -14,7 +86,7 @@ export const getDueDateStatus = (dueDate: Date): 'overdue' | 'today' | 'tomorrow
   // 날짜 비교를 위해 시간을 00:00:00으로 설정
   const todayStart = new Date(today.getFullYear(), today.getMonth(), today.getDate());
   const tomorrowStart = new Date(tomorrow.getFullYear(), tomorrow.getMonth(), tomorrow.getDate());
-  const dueDateStart = new Date(dueDate.getFullYear(), dueDate.getMonth(), dueDate.getDate());
+  const dueDateStart = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
   const threeDaysLater = new Date(todayStart);
   threeDaysLater.setDate(todayStart.getDate() + 3);
 

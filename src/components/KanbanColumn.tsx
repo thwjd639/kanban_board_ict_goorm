@@ -35,6 +35,7 @@ interface KanbanColumnProps {
   onEditTask: (task: Task) => void;
   onSaveEditTask: (columnId: string) => void;
   onCancelEditTask: () => void;
+  onDeleteTask: (taskId: string, columnId: string) => void; // 이 prop이 누락되어 있었습니다
   onShowAddForm: (columnId: string) => void;
   onHideAddForm: () => void;
   onNewTaskChange: (data: Partial<typeof newTask>) => void;
@@ -108,7 +109,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             formData={newTask}
             workMode={workMode}
             onChange={onNewTaskChange}
-            onSubmit={() => onAddTask(column.id)} // 수정된 부분: onSave -> onSubmit
+            onSubmit={() => onAddTask(column.id)}
             onCancel={onHideAddForm}
           />
         )}
@@ -135,7 +136,7 @@ const KanbanColumn: React.FC<KanbanColumnProps> = ({
             formData={editTask}
             workMode={workMode}
             onChange={onEditTaskChange}
-            onSubmit={() => onSaveEditTask(column.id)} // 수정된 부분: onSave -> onSubmit
+            onSubmit={() => onSaveEditTask(column.id)}
             onCancel={onCancelEditTask}
             isEditing={true}
           />
